@@ -49,3 +49,10 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+.impeccable.md
+.superpowers/
+docs/superpowers/
+.worktrees/
+CLAUDE.md
+"Job Assistant Agent*"
+Job Assistant Agent*
