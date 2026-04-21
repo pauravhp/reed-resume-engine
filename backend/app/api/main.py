@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    answers,
     applications,
     education,
     experiences,
@@ -30,6 +31,7 @@ api_router.include_router(skills.router)
 api_router.include_router(leadership.router)
 api_router.include_router(applications.router)
 api_router.include_router(resumes.router)
+api_router.include_router(answers.router)
 
 
 if settings.ENVIRONMENT == "local":
