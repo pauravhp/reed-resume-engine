@@ -1,16 +1,18 @@
 /** Escape a string for safe insertion into a LaTeX document. */
 export function latexEscape(str: string): string {
-  return str
-    .replace(/\\/g, "\\textbackslash{}")
-    .replace(/&/g, "\\&")
-    .replace(/%/g, "\\%")
-    .replace(/\$/g, "\\$")
-    .replace(/#/g, "\\#")
-    .replace(/_/g, "\\_")
-    .replace(/\{/g, "\\{")
-    .replace(/\}/g, "\\}")
-    .replace(/~/g, "\\textasciitilde{}")
-    .replace(/\^/g, "\\textasciicircum{}")
+  const escapeMap: Record<string, string> = {
+    "\\": "\\textbackslash{}",
+    "&": "\\&",
+    "%": "\\%",
+    $: "\\$",
+    "#": "\\#",
+    _: "\\_",
+    "{": "\\{",
+    "}": "\\}",
+    "~": "\\textasciitilde{}",
+    "^": "\\textasciicircum{}",
+  }
+  return str.replace(/[\\&%$#_{}~^]/g, (ch) => escapeMap[ch])
 }
 
 export interface LatexInput {
