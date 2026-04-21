@@ -1,6 +1,5 @@
-import { Briefcase, Home, Users } from "lucide-react"
+import { BookOpen, LayoutDashboard, MessageSquare, User, Zap } from "lucide-react"
 
-import { SidebarAppearance } from "@/components/Common/Appearance"
 import { Logo } from "@/components/Common/Logo"
 import {
   Sidebar,
@@ -8,21 +7,20 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar"
-import useAuth from "@/hooks/useAuth"
 import { type Item, Main } from "./Main"
-import { User } from "./User"
+import { User as UserMenu } from "./User"
+import useAuth from "@/hooks/useAuth"
 
-const baseItems: Item[] = [
-  { icon: Home, title: "Dashboard", path: "/" },
-  { icon: Briefcase, title: "Items", path: "/items" },
+const navItems: Item[] = [
+  { icon: Zap,             title: "Generate",  path: "/generate"  },
+  { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard" },
+  { icon: BookOpen,        title: "Banks",     path: "/banks"     },
+  { icon: MessageSquare,   title: "Answers",   path: "/answers"   },
+  { icon: User,            title: "Profile",   path: "/profile"   },
 ]
 
 export function AppSidebar() {
   const { user: currentUser } = useAuth()
-
-  const items = currentUser?.is_superuser
-    ? [...baseItems, { icon: Users, title: "Admin", path: "/admin" }]
-    : baseItems
 
   return (
     <Sidebar collapsible="icon">
@@ -30,11 +28,10 @@ export function AppSidebar() {
         <Logo variant="responsive" />
       </SidebarHeader>
       <SidebarContent>
-        <Main items={items} />
+        <Main items={navItems} />
       </SidebarContent>
       <SidebarFooter>
-        <SidebarAppearance />
-        <User user={currentUser} />
+        <UserMenu user={currentUser} />
       </SidebarFooter>
     </Sidebar>
   )
