@@ -10,6 +10,7 @@ from app.api.routes import (
     private,
     profile,
     projects,
+    resumes,
     skills,
     users,
     utils,
@@ -28,6 +29,7 @@ api_router.include_router(experiences.router)
 api_router.include_router(skills.router)
 api_router.include_router(leadership.router)
 api_router.include_router(applications.router)
+api_router.include_router(resumes.router)
 
 
 if settings.ENVIRONMENT == "local":

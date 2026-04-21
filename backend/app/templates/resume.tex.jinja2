@@ -1,0 +1,168 @@
+%-------------------------
+% Resume — Paurav H Param
+% Jake's Resume template adapted for Jinja2
+%-------------------------
+
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+\pdfgentounicode=1
+
+%--- Custom commands ---
+
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+\begin{document}
+
+%-----------HEADER-----------
+% Name is hardcoded. Contact details come from the user's profile row.
+\begin{center}
+    {\Huge \scshape Paurav H Param} \\ \vspace{1pt}
+    \faPhone\ {{ phone | latex_escape }} ~
+    \faEnvelope\ \href{mailto:{{ email | latex_escape }}}{\underline{ {{- email | latex_escape -}} }} ~
+    \faLinkedin\ \href{https://{{ linkedin_url | latex_escape }}}{\underline{ {{- linkedin_url | latex_escape -}} }} ~
+    \faGithub\ \href{https://{{ github_url | latex_escape }}}{\underline{ {{- github_url | latex_escape -}} }}
+\end{center}
+
+%-----------SUMMARY-----------
+\section{Summary}
+\small{ {{- summary | latex_escape -}} }
+
+%-----------EDUCATION-----------
+% Static section — hardcoded for Paurav's UVic degree.
+% Coursework list is dynamic: the LLM decides whether to show it and which items.
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {University of Victoria}{Sep 2021 -- Dec 2025}
+      {Bachelor of Science in Computer Science}{Victoria, BC}
+    {% if include_coursework and coursework_items %}
+    \resumeItemListStart
+      {% for item in coursework_items %}
+      \resumeItem{ {{- item | latex_escape -}} }
+      {% endfor %}
+    \resumeItemListEnd
+    {% endif %}
+  \resumeSubHeadingListEnd
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+    {% for exp in selected_experiences %}
+    \resumeSubheading
+      { {{- exp.company | latex_escape -}} }{ {{- exp.start_date | latex_escape -}} -- {{ exp.end_date | latex_escape }}}
+      { {{- exp.role | latex_escape -}} }{ {{- (exp.location or '') | latex_escape -}} }
+      \resumeItemListStart
+        {% for bullet in exp.selected_bullets %}
+        \resumeItem{ {{- bullet | latex_escape -}} }
+        {% endfor %}
+      \resumeItemListEnd
+    {% endfor %}
+  \resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------
+\section{Projects}
+    \resumeSubHeadingListStart
+      {% for proj in selected_projects %}
+      \resumeProjectHeading
+          {\textbf{ {{- proj.name | latex_escape -}} } $|$ \emph{ {{- (proj.tech_stack or '') | latex_escape -}} }}{}
+          \resumeItemListStart
+            {% for bullet in proj.bullets %}
+            \resumeItem{ {{- bullet.text | latex_escape -}} }
+            {% endfor %}
+          \resumeItemListEnd
+      {% endfor %}
+    \resumeSubHeadingListEnd
+
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: {{ skills_languages | latex_escape }} } \\
+     \textbf{Frameworks \& Libraries}{: {{ skills_frameworks | latex_escape }} } \\
+     \textbf{Tools \& Platforms}{: {{ skills_tools | latex_escape }} }
+    }}
+ \end{itemize}
+
+{% if leadership %}
+%-----------LEADERSHIP / EXTRACURRICULAR-----------
+\section{Leadership / Extracurricular}
+  \resumeSubHeadingListStart
+    {% for entry in leadership %}
+    \resumeSubheading
+      { {{- entry.organization | latex_escape -}} }{ {{- entry.start_date | latex_escape -}} -- {{ entry.end_date | latex_escape }}}
+      { {{- entry.role | latex_escape -}} }{ {{- (entry.location or '') | latex_escape -}} }
+    {% if entry.bullets %}
+    \resumeItemListStart
+      {% for bullet in entry.bullets %}
+      \resumeItem{ {{- bullet.text | latex_escape -}} }
+      {% endfor %}
+    \resumeItemListEnd
+    {% endif %}
+    {% endfor %}
+  \resumeSubHeadingListEnd
+{% endif %}
+
+%-------------------------------------------
+\end{document}
