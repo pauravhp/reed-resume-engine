@@ -81,11 +81,12 @@ services:
       SMTP_SSL: ${SMTP_SSL}
       SMTP_PORT: ${SMTP_PORT}
       EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
-      POSTGRES_SERVER: db
+      POSTGRES_SERVER: ${POSTGRES_SERVER?Variable not set}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER?Variable not set}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      PGSSLMODE: ${PGSSLMODE:-require}
       SENTRY_DSN: ${SENTRY_DSN}
 
   backend:
@@ -119,11 +120,12 @@ services:
       SMTP_SSL: ${SMTP_SSL}
       SMTP_PORT: ${SMTP_PORT}
       EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
-      POSTGRES_SERVER: db
+      POSTGRES_SERVER: ${POSTGRES_SERVER?Variable not set}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER?Variable not set}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      PGSSLMODE: ${PGSSLMODE:-require}
       SENTRY_DSN: ${SENTRY_DSN}
 
     healthcheck:
