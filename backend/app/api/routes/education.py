@@ -1,68 +1,66 @@
+import uuid
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models import Education, EducationPublic, EducationUpdate
+from app.models import Education, EducationCreate, EducationPublic, EducationsPublic, EducationUpdate
 
 router = APIRouter(prefix="/education", tags=["education"])
 
-_EMPTY = EducationPublic(
-    institution="",
-    degree="",
-    field_of_study="",
-    start_date="",
-    end_date="",
-    location=None,
-    gpa=None,
-    coursework=[],
-)
+
+@router.get("/", response_model=EducationsPublic)
+def list_education(session: SessionDep, current_user: CurrentUser) -> Any:
+    rows = session.exec(
+        select(Education)
+        .where(Education.user_id == current_user.id)
+        .order_by(Education.display_order.asc())
+    ).all()
+    return EducationsPublic(data=list(rows), count=len(rows))
 
 
-@router.get("/", response_model=EducationPublic)
-def read_education(session: SessionDep, current_user: CurrentUser) -> Any:
-    db_row = session.get(Education, current_user.id)
-    if not db_row:
-        return _EMPTY
-    return EducationPublic(
-        institution=db_row.institution,
-        degree=db_row.degree,
-        field_of_study=db_row.field_of_study,
-        start_date=db_row.start_date,
-        end_date=db_row.end_date,
-        location=db_row.location,
-        gpa=db_row.gpa,
-        coursework=db_row.coursework or [],
-    )
-
-
-@router.put("/", response_model=EducationPublic)
-def upsert_education(
-    *, session: SessionDep, current_user: CurrentUser, education_in: EducationUpdate
+@router.post("/", response_model=EducationPublic)
+def create_education(
+    *, session: SessionDep, current_user: CurrentUser, edu_in: EducationCreate
 ) -> Any:
-    db_row = session.get(Education, current_user.id)
-    if not db_row:
-        db_row = Education(
-            user_id=current_user.id,
-            institution=education_in.institution or "",
-            degree=education_in.degree or "",
-            field_of_study=education_in.field_of_study or "",
-            start_date=education_in.start_date or "",
-            end_date=education_in.end_date or "",
-        )
-    update_dict = education_in.model_dump(exclude_unset=True)
-    db_row.sqlmodel_update(update_dict)
-    session.add(db_row)
+    row = Education(user_id=current_user.id, **edu_in.model_dump())
+    session.add(row)
     session.commit()
-    session.refresh(db_row)
-    return EducationPublic(
-        institution=db_row.institution,
-        degree=db_row.degree,
-        field_of_study=db_row.field_of_study,
-        start_date=db_row.start_date,
-        end_date=db_row.end_date,
-        location=db_row.location,
-        gpa=db_row.gpa,
-        coursework=db_row.coursework or [],
-    )
+    session.refresh(row)
+    return row
+
+
+@router.patch("/{education_id}", response_model=EducationPublic)
+def update_education(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    education_id: uuid.UUID,
+    edu_in: EducationUpdate,
+) -> Any:
+    row = session.get(Education, education_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Education entry not found")
+    if row.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    update_dict = edu_in.model_dump(exclude_unset=True)
+    row.sqlmodel_update(update_dict)
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+@router.delete("/{education_id}")
+def delete_education(
+    *, session: SessionDep, current_user: CurrentUser, education_id: uuid.UUID
+) -> Any:
+    row = session.get(Education, education_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Education entry not found")
+    if row.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    session.delete(row)
+    session.commit()
+    return {"message": "Education entry deleted"}

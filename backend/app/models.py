@@ -146,7 +146,8 @@ class ProfilePublic(SQLModel):
 # ─── Education ────────────────────────────────────────────────────────────────
 
 class Education(SQLModel, table=True):
-    user_id: uuid.UUID = Field(foreign_key="user.id", primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
     institution: str
     degree: str
     field_of_study: str
@@ -155,6 +156,19 @@ class Education(SQLModel, table=True):
     location: str | None = Field(default=None)
     gpa: str | None = Field(default=None)
     coursework: list = Field(default=[], sa_column=Column(JSONB, nullable=False, server_default="[]"))
+    display_order: int = Field(default=0)
+
+
+class EducationCreate(SQLModel):
+    institution: str
+    degree: str
+    field_of_study: str
+    start_date: str
+    end_date: str
+    location: str | None = None
+    gpa: str | None = None
+    coursework: list[str] = []
+    display_order: int = 0
 
 
 class EducationUpdate(SQLModel):
@@ -166,9 +180,12 @@ class EducationUpdate(SQLModel):
     location: str | None = None
     gpa: str | None = None
     coursework: list[str] | None = None
+    display_order: int | None = None
 
 
 class EducationPublic(SQLModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
     institution: str
     degree: str
     field_of_study: str
@@ -177,6 +194,12 @@ class EducationPublic(SQLModel):
     location: str | None
     gpa: str | None
     coursework: list[str]
+    display_order: int
+
+
+class EducationsPublic(SQLModel):
+    data: list[EducationPublic]
+    count: int
 
 
 # ─── Leadership ───────────────────────────────────────────────────────────────

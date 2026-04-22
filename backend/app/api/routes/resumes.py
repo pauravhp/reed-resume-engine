@@ -226,6 +226,7 @@ def _assemble_latex(
     profile: "Profile",
     email: str,
     leadership: list,
+    educations: list,
 ) -> str:
     """Render the Jinja2 LaTeX template from the enriched response dict."""
     leadership_ctx = [
@@ -241,6 +242,18 @@ def _assemble_latex(
             ],
         }
         for entry in leadership
+    ]
+
+    education_ctx = [
+        {
+            "institution": e.institution,
+            "degree": e.degree,
+            "field_of_study": e.field_of_study,
+            "start_date": e.start_date,
+            "end_date": e.end_date,
+            "location": e.location or "",
+        }
+        for e in educations
     ]
 
     env = Environment(autoescape=False)
@@ -261,6 +274,7 @@ def _assemble_latex(
         skills_frameworks=response_dict.get("skills", {}).get("frameworks", ""),
         skills_tools=response_dict.get("skills", {}).get("tools", ""),
         leadership=leadership_ctx,
+        education_list=education_ctx,
     )
 
 
@@ -316,7 +330,7 @@ async def _call_groq_experiences(
     client: groq.AsyncGroq,
     jd_text: str,
     experiences: list,
-    education: Any,
+    educations: list,
     excluded_bullets: list[str] | None = None,
 ) -> dict:
     """Call B: Select relevant bullets from each experience; decide on coursework.
@@ -353,9 +367,10 @@ async def _call_groq_experiences(
 
     coursework: list = []
     field_of_study = ""
-    if education:
-        coursework = education.coursework or []
-        field_of_study = education.field_of_study
+    for edu in educations:
+        coursework.extend(edu.coursework or [])
+        if not field_of_study:
+            field_of_study = edu.field_of_study
 
     num_experiences = len(experiences)
     bullets_guidance = (
@@ -521,7 +536,13 @@ async def generate_resume(
             .order_by(Experience.display_order.asc())
         ).all()
     )
-    education = session.get(Education, current_user.id)
+    educations = list(
+        session.exec(
+            select(Education)
+            .where(Education.user_id == current_user.id)
+            .order_by(Education.display_order.asc())
+        ).all()
+    )
     projects = list(
         session.exec(
             select(Project)
@@ -542,7 +563,7 @@ async def generate_resume(
     try:
         summary_r, exp_r, proj_r = await asyncio.gather(
             _call_groq_summary(client, jd_text, profile.bio_context or ""),
-            _call_groq_experiences(client, jd_text, experiences, education),
+            _call_groq_experiences(client, jd_text, experiences, educations),
             _call_groq_projects(client, jd_text, projects, skills),
         )
     except Exception as exc:
@@ -554,7 +575,7 @@ async def generate_resume(
     # 5. Build enriched response dict + render LaTeX
     response_dict = _build_generate_response(summary_r, exp_r, proj_r, experiences, projects)
     template_str = Path("app/templates/resume.tex.jinja2").read_text()
-    latex = _assemble_latex(template_str, response_dict, profile, current_user.email, leadership)
+    latex = _assemble_latex(template_str, response_dict, profile, current_user.email, leadership, educations)
 
     # 6. Save Application row
     application = Application(
@@ -623,9 +644,16 @@ async def regenerate_summary(
             .order_by(Leadership.display_order.asc())
         ).all()
     )
+    educations = list(
+        session.exec(
+            select(Education)
+            .where(Education.user_id == current_user.id)
+            .order_by(Education.display_order.asc())
+        ).all()
+    )
     updated_json = {**application.generated_json, "summary": summary_r["summary"]}
     template_str = Path("app/templates/resume.tex.jinja2").read_text()
-    latex = _assemble_latex(template_str, updated_json, profile, current_user.email, leadership)
+    latex = _assemble_latex(template_str, updated_json, profile, current_user.email, leadership, educations)
 
     application.generated_json = updated_json
     application.generated_latex = latex
@@ -671,14 +699,20 @@ async def regenerate_experiences(
             .order_by(Experience.display_order.asc())
         ).all()
     )
-    education = session.get(Education, current_user.id)
+    educations = list(
+        session.exec(
+            select(Education)
+            .where(Education.user_id == current_user.id)
+            .order_by(Education.display_order.asc())
+        ).all()
+    )
 
     try:
         exp_r = await _call_groq_experiences(
             client,
             application.jd_text,
             experiences,
-            education,
+            educations,
             excluded_bullets=request.excluded_bullets,
         )
     except Exception as exc:
@@ -705,6 +739,13 @@ async def regenerate_experiences(
             .order_by(Leadership.display_order.asc())
         ).all()
     )
+    regen_educations = list(
+        session.exec(
+            select(Education)
+            .where(Education.user_id == current_user.id)
+            .order_by(Education.display_order.asc())
+        ).all()
+    )
     updated_json = {
         **application.generated_json,
         "experiences": enriched_experiences,
@@ -712,7 +753,7 @@ async def regenerate_experiences(
         "coursework_items": exp_r.get("coursework_items", []),
     }
     template_str = Path("app/templates/resume.tex.jinja2").read_text()
-    latex = _assemble_latex(template_str, updated_json, profile, current_user.email, leadership)
+    latex = _assemble_latex(template_str, updated_json, profile, current_user.email, leadership, regen_educations)
 
     application.generated_json = updated_json
     application.generated_latex = latex
@@ -796,13 +837,20 @@ async def regenerate_projects(
             .order_by(Leadership.display_order.asc())
         ).all()
     )
+    proj_educations = list(
+        session.exec(
+            select(Education)
+            .where(Education.user_id == current_user.id)
+            .order_by(Education.display_order.asc())
+        ).all()
+    )
     updated_json = {
         **application.generated_json,
         "projects": enriched_projects,
         "skills": new_skills,
     }
     template_str = Path("app/templates/resume.tex.jinja2").read_text()
-    latex = _assemble_latex(template_str, updated_json, profile, current_user.email, leadership)
+    latex = _assemble_latex(template_str, updated_json, profile, current_user.email, leadership, proj_educations)
 
     application.generated_json = updated_json
     application.generated_latex = latex

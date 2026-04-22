@@ -19,6 +19,7 @@ import {
 } from "@/hooks/useRegenerate"
 import useAuth from "@/hooks/useAuth"
 import { apiGet } from "@/lib/api"
+import { useEducations } from "@/hooks/useBanks"
 
 export const Route = createFileRoute("/_layout/generate")({
   component: GeneratePage,
@@ -49,6 +50,8 @@ function GeneratePage() {
     queryKey: ["profile"],
     queryFn: () => apiGet("/api/v1/profile/"),
   })
+
+  const { data: educations = [] } = useEducations()
 
   const generateMutation = useGenerate()
   const regenSummary = useRegenerateSummary(output?.id ?? "")
@@ -96,6 +99,14 @@ function GeneratePage() {
         linkedinUrl: profile?.linkedin_url ?? "",
         githubUrl: profile?.github_url ?? "",
         summary,
+        education: educations.map((edu) => ({
+          institution: edu.institution,
+          degree: edu.degree,
+          field_of_study: edu.field_of_study,
+          start_date: edu.start_date,
+          end_date: edu.end_date,
+          location: edu.location,
+        })),
         experiences: (output.experiences ?? []).map((exp) => ({
           ...exp,
           bullets: exp.bullets.filter((b) => checkedBullets.has(b)),

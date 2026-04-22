@@ -1,3 +1,4 @@
+{% raw %}
 %-------------------------
 % Resume — Paurav H Param
 % Jake's Resume template adapted for Jinja2
@@ -74,15 +75,15 @@
 
 %-------------------------------------------
 \begin{document}
+{% endraw %}
 
 %-----------HEADER-----------
-% Name is hardcoded. Contact details come from the user's profile row.
 \begin{center}
     {\Huge \scshape Paurav H Param} \\ \vspace{1pt}
     \faPhone\ {{ phone | latex_escape }} ~
     \faEnvelope\ \href{mailto:{{ email | latex_escape }}}{\underline{ {{- email | latex_escape -}} }} ~
-    \faLinkedin\ \href{https://{{ linkedin_url | latex_escape }}}{\underline{ {{- linkedin_url | latex_escape -}} }} ~
-    \faGithub\ \href{https://{{ github_url | latex_escape }}}{\underline{ {{- github_url | latex_escape -}} }}
+    \faLinkedin\ \href{ {{- linkedin_url | latex_escape -}} }{\underline{ {{- linkedin_url | latex_escape -}} }} ~
+    \faGithub\ \href{ {{- github_url | latex_escape -}} }{\underline{ {{- github_url | latex_escape -}} }}
 \end{center}
 
 %-----------SUMMARY-----------
@@ -90,20 +91,20 @@
 \small{ {{- summary | latex_escape -}} }
 
 %-----------EDUCATION-----------
-% Static section — hardcoded for Paurav's UVic degree.
-% Coursework list is dynamic: the LLM decides whether to show it and which items.
 \section{Education}
   \resumeSubHeadingListStart
+    {% for edu in education_list %}
     \resumeSubheading
-      {University of Victoria}{Sep 2021 -- Dec 2025}
-      {Bachelor of Science in Computer Science}{Victoria, BC}
-    {% if include_coursework and coursework_items %}
+      { {{- edu.institution | latex_escape -}} }{ {{- edu.start_date | latex_escape -}} -- {{ edu.end_date | latex_escape if edu.end_date else 'Present' }}}
+      { {{- edu.degree | latex_escape -}}{% if edu.field_of_study %} in {{ edu.field_of_study | latex_escape }}{% endif %} }{ {{- (edu.location or '') | latex_escape -}} }
+    {% if loop.first and include_coursework and coursework_items %}
     \resumeItemListStart
       {% for item in coursework_items %}
       \resumeItem{ {{- item | latex_escape -}} }
       {% endfor %}
     \resumeItemListEnd
     {% endif %}
+    {% endfor %}
   \resumeSubHeadingListEnd
 
 %-----------EXPERIENCE-----------
@@ -111,10 +112,10 @@
   \resumeSubHeadingListStart
     {% for exp in selected_experiences %}
     \resumeSubheading
-      { {{- exp.company | latex_escape -}} }{ {{- exp.start_date | latex_escape -}} -- {{ exp.end_date | latex_escape }}}
-      { {{- exp.role | latex_escape -}} }{ {{- (exp.location or '') | latex_escape -}} }
+      { {{- exp.company | latex_escape -}} }{ {{- exp.start_date | latex_escape -}} -- {{ exp.end_date | latex_escape if exp.end_date else 'Present' }}}
+      { {{- exp.role_title | latex_escape -}} }{ {{- (exp.location or '') | latex_escape -}} }
       \resumeItemListStart
-        {% for bullet in exp.selected_bullets %}
+        {% for bullet in exp.bullets %}
         \resumeItem{ {{- bullet | latex_escape -}} }
         {% endfor %}
       \resumeItemListEnd
@@ -129,7 +130,7 @@
           {\textbf{ {{- proj.name | latex_escape -}} } $|$ \emph{ {{- (proj.tech_stack or '') | latex_escape -}} }}{}
           \resumeItemListStart
             {% for bullet in proj.bullets %}
-            \resumeItem{ {{- bullet.text | latex_escape -}} }
+            \resumeItem{ {{- bullet | latex_escape -}} }
             {% endfor %}
           \resumeItemListEnd
       {% endfor %}
@@ -151,12 +152,12 @@
   \resumeSubHeadingListStart
     {% for entry in leadership %}
     \resumeSubheading
-      { {{- entry.organization | latex_escape -}} }{ {{- entry.start_date | latex_escape -}} -- {{ entry.end_date | latex_escape }}}
+      { {{- entry.organization | latex_escape -}} }{ {{- entry.start_date | latex_escape -}} -- {{ entry.end_date | latex_escape if entry.end_date else 'Present' }}}
       { {{- entry.role | latex_escape -}} }{ {{- (entry.location or '') | latex_escape -}} }
     {% if entry.bullets %}
     \resumeItemListStart
       {% for bullet in entry.bullets %}
-      \resumeItem{ {{- bullet.text | latex_escape -}} }
+      \resumeItem{ {{- bullet | latex_escape -}} }
       {% endfor %}
     \resumeItemListEnd
     {% endif %}

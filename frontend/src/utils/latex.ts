@@ -21,6 +21,14 @@ export interface LatexInput {
   linkedinUrl: string
   githubUrl: string
   summary: string
+  education: Array<{
+    institution: string
+    degree: string
+    field_of_study: string
+    start_date: string
+    end_date: string
+    location: string | null
+  }>
   experiences: Array<{
     company: string
     role_title: string
@@ -44,7 +52,7 @@ export interface LatexInput {
 
 export function buildLatex(input: LatexInput): string {
   const e = latexEscape
-  const { fullName, phone, linkedinUrl, githubUrl, summary, experiences, projects, skills } = input
+  const { fullName, phone, linkedinUrl, githubUrl, summary, education, experiences, projects, skills } = input
 
   const experienceBlocks = experiences.map((exp) => {
     const dateRange = exp.end_date ? `${e(exp.start_date)} -- ${e(exp.end_date)}` : `${e(exp.start_date)} -- Present`
@@ -162,9 +170,13 @@ ${projectBlocks}
 %-----------EDUCATION-----------
 \\section{Education}
   \\resumeSubHeadingListStart
-    \\resumeSubheading
-      {University of Victoria}{Sep 2021 -- Dec 2025}
-      {Bachelor of Science, Computer Science}{Victoria, BC}
+${education.map((edu) => {
+    const dateRange = edu.end_date ? `${e(edu.start_date)} -- ${e(edu.end_date)}` : `${e(edu.start_date)} -- Present`
+    const degreeField = edu.field_of_study ? `${e(edu.degree)} in ${e(edu.field_of_study)}` : e(edu.degree)
+    return `    \\resumeSubheading
+      {${e(edu.institution)}}{${dateRange}}
+      {${degreeField}}{${e(edu.location ?? "")}}`
+  }).join("\n\n")}
   \\resumeSubHeadingListEnd
 
 \\end{document}

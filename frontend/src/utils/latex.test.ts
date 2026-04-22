@@ -50,6 +50,16 @@ describe("buildLatex", () => {
     linkedinUrl: "https://linkedin.com/in/janedoe",
     githubUrl: "https://github.com/janedoe",
     summary: "Software engineer with 5 years experience.",
+    education: [
+      {
+        institution: "UVic",
+        degree: "Bachelor of Science",
+        field_of_study: "Computer Science",
+        start_date: "Sep 2021",
+        end_date: "Dec 2025",
+        location: "Victoria, BC",
+      },
+    ],
     experiences: [
       {
         company: "Acme Corp",

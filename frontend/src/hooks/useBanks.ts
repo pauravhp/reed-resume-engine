@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api"
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "@/lib/api"
 
 // ---- Types ----
 
@@ -25,16 +25,31 @@ export interface Experience {
 export interface ExperienceCreate { company: string; role_title: string; start_date: string; end_date?: string | null; location: string; bullets: string[] }
 export interface ExperienceUpdate extends ExperienceCreate { id: string }
 
-export interface Education {
-  institution: string | null
-  degree: string | null
-  field_of_study: string | null
-  start_date: string | null
-  end_date: string | null
+export interface EducationItem {
+  id: string
+  user_id: string
+  institution: string
+  degree: string
+  field_of_study: string
+  start_date: string
+  end_date: string
   location: string | null
   gpa: string | null
   coursework: string[]
+  display_order: number
 }
+export interface EducationCreate {
+  institution: string
+  degree: string
+  field_of_study: string
+  start_date: string
+  end_date: string
+  location?: string | null
+  gpa?: string | null
+  coursework: string[]
+  display_order?: number
+}
+export interface EducationUpdate extends Partial<EducationCreate> { id: string }
 
 export interface Leadership {
   id: string
@@ -122,17 +137,34 @@ export function useDeleteExperience() {
 
 // ---- Education ----
 
-export function useEducation() {
-  return useQuery<Education | null>({
+export function useEducations() {
+  return useQuery<EducationItem[]>({
     queryKey: ["education"],
-    queryFn: () => apiGet("/api/v1/education/"),
+    queryFn: () => apiGet<{ data: EducationItem[] }>("/api/v1/education/").then((r) => r.data),
   })
 }
 
-export function useUpsertEducation() {
+export function useCreateEducation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: Education) => apiPut<Education>("/api/v1/education/", body),
+    mutationFn: (body: EducationCreate) => apiPost<EducationItem>("/api/v1/education/", body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["education"] }),
+  })
+}
+
+export function useUpdateEducation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: EducationUpdate) =>
+      apiPatch<EducationItem>(`/api/v1/education/${id}`, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["education"] }),
+  })
+}
+
+export function useDeleteEducation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiDelete(`/api/v1/education/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["education"] }),
   })
 }
