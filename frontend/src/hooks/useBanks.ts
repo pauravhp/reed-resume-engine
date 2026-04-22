@@ -6,12 +6,13 @@ import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "@/lib/api"
 export interface Project {
   id: string
   name: string
+  description: string | null
   tech_stack: string
   bullets: string[]
   github_url: string | null
 }
-export interface ProjectCreate { name: string; tech_stack: string; bullets: string[]; github_url?: string }
-export interface ProjectUpdate extends ProjectCreate { id: string }
+export interface ProjectCreate { name: string; description?: string; tech_stack: string; bullets: string[]; github_url?: string }
+export interface ProjectUpdate extends Partial<ProjectCreate> { id: string }
 
 export interface Experience {
   id: string

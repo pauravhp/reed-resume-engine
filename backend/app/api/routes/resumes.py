@@ -298,8 +298,8 @@ async def _call_groq_summary(
     prompt = f"""You are a professional resume writer helping a student tailor their resume.
 
 Write a resume summary in exactly this structure:
-1. First sentence: "Seeking [role] in [specific field] for [term(s)] [year]." — extract the role type, field, term(s), and year from the job description. Be specific (e.g. "AI/ML Engineering", "Software Engineering", not just "engineering").
-2. One or two follow-up sentences describing who the candidate is and what they bring — grounded in the bio context only.
+1. 1-2 sentences describing who the candidate is and what they bring — grounded in the bio context only.
+2. Final sentence: "Seeking [role] in [specific field] for [term(s)] [year]." — extract the role type, field, term(s), and year from the job description. Be specific (e.g. "AI/ML Engineering", "Software Engineering", not just "engineering").
 
 Rules:
 - Total length: 2-3 sentences, tight and direct
@@ -455,6 +455,7 @@ async def _call_groq_projects(
         {
             "id": str(p.id),
             "name": p.name,
+            **({"description": p.description} if p.description else {}),
             "tech_stack": p.tech_stack or "",
             "bullets": [b["text"] if isinstance(b, dict) else b for b in (p.bullets or [])],
         }
@@ -467,18 +468,14 @@ async def _call_groq_projects(
 
     prompt = f"""You are a resume tailoring expert.
 
-Select the 2 most technically relevant projects for this job description and reorder skill lists to front-load JD-relevant technologies.
+Select the 2 most relevant projects for this job description and reorder skill lists to front-load JD-relevant technologies.
 
-Project selection — rank each project against these criteria, then pick the top 2:
-STRONG signal (prefer these):
-- Demonstrates AI/ML depth: multi-step LLM reasoning, RAG pipelines, agents, model evaluation, training, or fine-tuning
-- Uses recognized AI/ML frameworks (e.g. LangChain, PyTorch, scikit-learn, Hugging Face)
-- Shows research-grade or systems-level work (GPU/CUDA, distributed compute, novel algorithms)
-- Hackathon win or competition context in a relevant technical area
-WEAK signal (deprioritize these):
-- Project whose primary AI contribution is calling an external LLM/AI API and displaying the result in a UI
-- No AI/ML component at all, if stronger AI projects exist in the pool
-When two projects score similarly, prefer the one with more technical depth or a more novel AI application.
+Project selection — for each project, use its description (if present), tech stack, and bullet points to evaluate:
+1. Domain alignment: does the project operate in a domain that matches the role (e.g. same industry, same problem space, same type of system)?
+2. Technical alignment: does the project demonstrate skills, tools, or concepts the JD explicitly requires or values?
+3. Depth: does the project show real technical substance (complex problem solved, notable outcome, meaningful scope) rather than surface-level work?
+
+Pick the 2 projects that score highest across all three dimensions for this specific JD. Do not apply assumptions about which domains or technologies are universally "stronger" — evaluate purely based on fit with this particular role.
 
 Rules:
 - Select exactly 2 project IDs (use the "id" field from the input). If fewer than 2 projects are provided, select all of them.
