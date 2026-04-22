@@ -259,7 +259,6 @@ class Project(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="user.id")
     name: str
-    description: str | None = Field(default=None)
     tech_stack: str | None = Field(default=None)
     bullets: list = Field(default=[], sa_column=Column(JSONB, nullable=False, server_default="[]"))
     display_order: int = Field(default=0)
@@ -269,7 +268,6 @@ class Project(SQLModel, table=True):
 
 class ProjectCreate(SQLModel):
     name: str
-    description: str | None = None
     tech_stack: str | None = None
     bullets: list = []
     display_order: int = 0
@@ -279,7 +277,6 @@ class ProjectCreate(SQLModel):
 
 class ProjectUpdate(SQLModel):
     name: str | None = None
-    description: str | None = None
     tech_stack: str | None = None
     bullets: list | None = None
     display_order: int | None = None
@@ -291,7 +288,6 @@ class ProjectPublic(SQLModel):
     id: uuid.UUID
     user_id: uuid.UUID
     name: str
-    description: str | None
     tech_stack: str | None
     bullets: list
     display_order: int

@@ -455,7 +455,6 @@ async def _call_groq_projects(
         {
             "id": str(p.id),
             "name": p.name,
-            **({"description": p.description} if p.description else {}),
             "tech_stack": p.tech_stack or "",
             "bullets": [b["text"] if isinstance(b, dict) else b for b in (p.bullets or [])],
         }

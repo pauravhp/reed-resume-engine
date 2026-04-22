@@ -23,7 +23,6 @@ function ProjectForm({
   onCancel: () => void
 }) {
   const [name, setName] = useState(item?.name ?? "")
-  const [description, setDescription] = useState(item?.description ?? "")
   const [techStack, setTechStack] = useState(item?.tech_stack ?? "")
   const [bullets, setBullets] = useState((item?.bullets ?? []).join("\n"))
   const [githubUrl, setGithubUrl] = useState(item?.github_url ?? "")
@@ -35,7 +34,6 @@ function ProjectForm({
   function handleSave() {
     const payload = {
       name,
-      description: description.trim() || undefined,
       tech_stack: techStack,
       bullets: bullets.split("\n").map((l) => l.trim()).filter(Boolean),
       github_url: githubUrl || undefined,
@@ -64,10 +62,6 @@ function ProjectForm({
           <Label>Tech Stack</Label>
           <Input value={techStack} onChange={(e) => setTechStack(e.target.value)} placeholder="React, FastAPI, …" />
         </div>
-      </div>
-      <div className="space-y-1">
-        <Label>Description <span className="text-muted-foreground text-xs">(1-2 sentences — what it is, what domain, what it demonstrates)</span></Label>
-        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="resize-none text-sm" placeholder="e.g. Full-stack AI scheduling tool for university students, demonstrating LLM integration, multi-step reasoning, and production deployment." />
       </div>
       <div className="space-y-1">
         <Label>Bullets <span className="text-muted-foreground text-xs">(one per line)</span></Label>
