@@ -469,12 +469,13 @@ async def _call_groq_projects(
 
 Select the 2 most relevant projects for this job description and reorder skill lists to front-load JD-relevant technologies.
 
-Project selection — for each project, use its description (if present), tech stack, and bullet points to evaluate:
-1. Domain alignment: does the project operate in a domain that matches the role (e.g. same industry, same problem space, same type of system)?
-2. Technical alignment: does the project demonstrate skills, tools, or concepts the JD explicitly requires or values?
-3. Depth: does the project show real technical substance (complex problem solved, notable outcome, meaningful scope) rather than surface-level work?
-
-Pick the 2 projects that score highest across all three dimensions for this specific JD. Do not apply assumptions about which domains or technologies are universally "stronger" — evaluate purely based on fit with this particular role.
+Project selection process — work through this for every project before choosing:
+Step 1. Read the bullets carefully. The bullets are the ground truth for what a project actually does and what it demonstrates — not just the name or tech stack.
+Step 2. Score each project on three dimensions:
+   - Domain alignment: based on the bullets, what problem space does this project operate in? How closely does that match the domain, industry, or type of work described in the JD?
+   - Technical depth: based on the bullets, what is the actual technical complexity — is this solving a hard problem, or is it glue code between existing APIs? Depth is determined by what was built, not what tools were used.
+   - Skill match: does the project demonstrate specific skills, concepts, or methods the JD explicitly calls for?
+Step 3. Pick the 2 projects with the highest combined score. Do not favour any domain or technology stack by default — evaluate purely against this specific JD.
 
 Rules:
 - Select exactly 2 project IDs (use the "id" field from the input). If fewer than 2 projects are provided, select all of them.
