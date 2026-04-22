@@ -295,14 +295,19 @@ async def _call_groq_summary(
     """
     import json
 
-    prompt = f"""You are a professional resume writer.
+    prompt = f"""You are a professional resume writer helping a student tailor their resume.
 
-Given the job description and bio context below, write a 2-3 sentence professional summary tailored to this specific role.
+Write a resume summary in exactly this structure:
+1. First sentence: "Seeking [role] in [specific field] for [term(s)] [year]." — extract the role type, field, term(s), and year from the job description. Be specific (e.g. "AI/ML Engineering", "Software Engineering", not just "engineering").
+2. One or two follow-up sentences describing who the candidate is and what they bring — grounded in the bio context only.
+
 Rules:
-- Be specific to the role, not generic
-- No buzzwords like "passionate", "results-driven", "dynamic"
-- Write in first person without using the word "I"
-- Do not mention the company name explicitly
+- Total length: 2-3 sentences, tight and direct
+- The bio context is the source of truth for what the candidate brings — do NOT mirror, paraphrase, or echo language from the job description
+- Do NOT name specific projects, companies, awards, or bullet-point achievements — those appear elsewhere in the resume
+- No buzzwords ("passionate", "results-driven", "dynamic", "transformative", "cutting-edge")
+- Write in first person without the word "I"
+- Describe who the candidate IS, not what they want to do or what the company does
 
 Job Description:
 {jd_text}
@@ -462,7 +467,18 @@ async def _call_groq_projects(
 
     prompt = f"""You are a resume tailoring expert.
 
-Select the 2 most relevant projects for this job description and reorder skill lists to front-load JD-relevant technologies.
+Select the 2 most technically relevant projects for this job description and reorder skill lists to front-load JD-relevant technologies.
+
+Project selection — rank each project against these criteria, then pick the top 2:
+STRONG signal (prefer these):
+- Demonstrates AI/ML depth: multi-step LLM reasoning, RAG pipelines, agents, model evaluation, training, or fine-tuning
+- Uses recognized AI/ML frameworks (e.g. LangChain, PyTorch, scikit-learn, Hugging Face)
+- Shows research-grade or systems-level work (GPU/CUDA, distributed compute, novel algorithms)
+- Hackathon win or competition context in a relevant technical area
+WEAK signal (deprioritize these):
+- Project whose primary AI contribution is calling an external LLM/AI API and displaying the result in a UI
+- No AI/ML component at all, if stronger AI projects exist in the pool
+When two projects score similarly, prefer the one with more technical depth or a more novel AI application.
 
 Rules:
 - Select exactly 2 project IDs (use the "id" field from the input). If fewer than 2 projects are provided, select all of them.
