@@ -295,15 +295,21 @@ async def _call_groq_summary(
     """
     import json
 
-    prompt = f"""You are a professional resume writer helping a student tailor their resume.
+    prompt = f"""You are a professional resume writer helping a candidate tailor their resume.
 
-Write a resume summary in exactly this structure:
-1. 1-2 sentences describing who the candidate is and what they bring — grounded in the bio context only.
+ABSOLUTE RULE — NO HALLUCINATION:
+- The Bio Context is the ONLY source of truth about who the candidate is.
+- Do NOT invent, imply, or infer degrees, program names (e.g. "master's student", "PhD candidate"), schools, employers, certifications, publications, or years of experience not explicitly stated in the Bio Context.
+- If the Bio Context is empty or sparse, write a generic but honest description ("a software developer with hands-on experience in [broad area]") — do NOT fabricate degree level, school, or seniority to pad the sentence.
+- If unsure about any fact, omit it. A shorter, honest summary is strictly better than a longer, fabricated one.
+
+Structure:
+1. 1-2 sentences describing who the candidate is and what they bring — grounded in the Bio Context only.
 2. Final sentence: "Seeking [role] in [specific field] for [term(s)] [year]." — extract the role type, field, term(s), and year from the job description. Be specific (e.g. "AI/ML Engineering", "Software Engineering", not just "engineering").
 
-Rules:
+Style rules:
 - Total length: 2-3 sentences, tight and direct
-- The bio context is the source of truth for what the candidate brings — do NOT mirror, paraphrase, or echo language from the job description
+- Do NOT mirror, paraphrase, or echo language from the job description for the first part
 - Do NOT name specific projects, companies, awards, or bullet-point achievements — those appear elsewhere in the resume
 - No buzzwords ("passionate", "results-driven", "dynamic", "transformative", "cutting-edge")
 - Write in first person without the word "I"
