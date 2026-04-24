@@ -56,3 +56,9 @@ docs/superpowers/
 CLAUDE.md
 "Job Assistant Agent*"
 Job Assistant Agent*
+
+# Extension build artifacts
+extension/.output/
+extension/.wxt/
+extension/node_modules/
+

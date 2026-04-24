@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-sage: oklch(85% 0.052 150);
+  --color-sage-accent: oklch(50% 0.135 148);
+  --color-sage-accent-hover: oklch(45% 0.135 148);
+  --color-oat: oklch(91% 0.022 83);
+  --color-oat-card: oklch(87% 0.028 83);
+  --color-border: oklch(81% 0.030 83);
+  --color-text-primary: oklch(20% 0.025 80);
+  --color-text-secondary: oklch(46% 0.04 80);
+  --color-success: oklch(55% 0.18 145);
+  --color-header-text: oklch(98% 0.005 150);
+
+  --font-display: 'Bricolage Grotesque', serif;
+  --font-body: 'Geist', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+}
