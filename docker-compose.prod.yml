@@ -1,0 +1,39 @@
+# Production compose — two services only.
+# frontend: Vercel (not here)
+# database: Neon (remote, no container needed)
+# Caddy is system-wide on the host, NOT in Docker.
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml logs -f backend
+
+services:
+  prestart:
+    image: "${DOCKER_IMAGE_BACKEND?Variable not set}:latest"
+    build:
+      context: ./backend
+    networks:
+      - traefik-public
+    env_file:
+      - .env
+    command: bash scripts/prestart.sh
+    restart: "no"
+
+  backend:
+    image: "${DOCKER_IMAGE_BACKEND?Variable not set}:latest"
+    build:
+      context: ./backend
+    networks:
+      - traefik-public
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      prestart:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+networks:
+  traefik-public:
+    driver: bridge
