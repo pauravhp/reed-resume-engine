@@ -1,239 +1,144 @@
-# Full Stack FastAPI Template
+# R.E.E.D — Resume Engine
 
-<a href="https://github.com/fastapi/full-stack-fastapi-template/actions?query=workflow%3A%22Test+Docker+Compose%22" target="_blank"><img src="https://github.com/fastapi/full-stack-fastapi-template/workflows/Test%20Docker%20Compose/badge.svg" alt="Test Docker Compose"></a>
-<a href="https://github.com/fastapi/full-stack-fastapi-template/actions?query=workflow%3A%22Test+Backend%22" target="_blank"><img src="https://github.com/fastapi/full-stack-fastapi-template/workflows/Test%20Backend/badge.svg" alt="Test Backend"></a>
-<a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/fastapi/full-stack-fastapi-template" target="_blank"><img src="https://coverage-badge.samuelcolvin.workers.dev/fastapi/full-stack-fastapi-template.svg" alt="Coverage"></a>
+A job assistant that turns a pasted job description into a tailored, recruiter-ready resume, answers application questions from your real profile, and tracks every application on a dashboard.
 
-## Technology Stack and Features
+**Live:** [reed-resume-engine.vercel.app](https://reed-resume-engine.vercel.app)
 
-- ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
-  - 🧰 [SQLModel](https://sqlmodel.tiangolo.com) for the Python SQL database interactions (ORM).
-  - 🔍 [Pydantic](https://docs.pydantic.dev), used by FastAPI, for the data validation and settings management.
-  - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
-- 🚀 [React](https://react.dev) for the frontend.
-  - 💃 Using TypeScript, hooks, [Vite](https://vitejs.dev), and other parts of a modern frontend stack.
-  - 🎨 [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) for the frontend components.
-  - 🤖 An automatically generated frontend client.
-  - 🧪 [Playwright](https://playwright.dev) for End-to-End testing.
-  - 🦇 Dark mode support.
-- 🐋 [Docker Compose](https://www.docker.com) for development and production.
-- 🔒 Secure password hashing by default.
-- 🔑 JWT (JSON Web Token) authentication.
-- 📫 Email based password recovery.
-- 📬 [Mailcatcher](https://mailcatcher.me) for local email testing during development.
-- ✅ Tests with [Pytest](https://pytest.org).
-- 📞 [Traefik](https://traefik.io) as a reverse proxy / load balancer.
-- 🚢 Deployment instructions using Docker Compose, including how to set up a frontend Traefik proxy to handle automatic HTTPS certificates.
-- 🏭 CI (continuous integration) and CD (continuous deployment) based on GitHub Actions.
+---
 
-### Dashboard Login
+## What it does
 
-[![API docs](img/login.png)](https://github.com/fastapi/full-stack-fastapi-template)
+1. **Tailored resume generation** — paste a job description, get back a LaTeX resume that picks the most relevant bullets from your saved work history, picks your two most relevant projects, reorders your skills to front-load JD-matched tech, and writes a 2–3 sentence summary. Also returns a 0–100 match score with written reasoning.
+2. **Tailored application answers** — paste a JD + an application question (e.g. "Why are you a good fit?"), get back a 3–5 sentence personalised answer grounded in your bio, experiences, and projects — with explicit guardrails against fabricating credentials.
+3. **Application dashboard** — every generated resume creates an application row with auto-extracted company + role (if the JD names them), inline-editable status (`not_applied`, `applied`, `response_received`, `interview`, `rejected`, `offer`) and notes.
+4. **Profile banks** — structured storage of bio, phone, LinkedIn, GitHub, experiences, projects, skills, education, leadership. Designed as the data source a future browser autofill extension would read.
 
-### Dashboard - Admin
+---
 
-[![API docs](img/dashboard.png)](https://github.com/fastapi/full-stack-fastapi-template)
+## Architecture
 
-### Dashboard - Items
-
-[![API docs](img/dashboard-items.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Dashboard - Dark Mode
-
-[![API docs](img/dashboard-dark.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Interactive API Documentation
-
-[![API docs](img/docs.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-## How To Use It
-
-You can **just fork or clone** this repository and use it as is.
-
-✨ It just works. ✨
-
-### How to Use a Private Repository
-
-If you want to have a private repository, GitHub won't allow you to simply fork it as it doesn't allow changing the visibility of forks.
-
-But you can do the following:
-
-- Create a new GitHub repo, for example `my-full-stack`.
-- Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
-
-```bash
-git clone git@github.com:fastapi/full-stack-fastapi-template.git my-full-stack
+```
+Browser ──► Vercel (React SPA)
+            │
+            └─► HTTPS ──► Caddy (VPS) ──► FastAPI (Docker) ──► Neon (serverless Postgres)
+                                           │
+                                           └─► Groq API (llama-3.3-70b)
 ```
 
-- Enter into the new directory:
+- **Frontend**: React 19 + Vite + TanStack Router + TanStack Query, shadcn/ui on Tailwind v4, auto-generated TS client from the backend OpenAPI schema. Hosted on Vercel.
+- **Backend**: FastAPI (Python 3.10) + SQLModel + Alembic, running under uvicorn in Docker Compose on a Hetzner CPX11. Caddy handles TLS via Let's Encrypt.
+- **Database**: Neon (serverless Postgres), `psycopg3` driver, `PGSSLMODE=require`.
+- **LLM**: Groq (`llama-3.3-70b-versatile`). Users bring their own API key; the key is **Fernet-encrypted per-user at rest** (Fernet key derived from the server `SECRET_KEY` via SHA-256). Keys are decrypted only for the duration of a generation request and never logged.
+- **Auth**: JWT via the FastAPI template's built-in login flow.
+
+### Three parallel Groq calls per resume generation
+
+1. **Call A — Summary**: writes the opening 2–3 sentences from bio context + JD, with explicit no-hallucination guardrails (won't invent degrees, schools, or seniority).
+2. **Call B — Experiences**: selects which existing bullets from each work experience to keep for this JD (never rewrites bullets — zero fabrication risk), computes the match score + reasoning, decides whether to include coursework, and extracts company + role_title from the JD if literally present.
+3. **Call C — Projects & Skills**: picks the 2 most relevant projects and reorders each skill category to front-load JD-matched tech.
+
+All three run concurrently via `asyncio.gather` — full generation typically completes in 6–12 seconds.
+
+---
+
+## Local development
 
 ```bash
-cd my-full-stack
-```
-
-- Set the new origin to your new repository, copy it from the GitHub interface, for example:
-
-```bash
-git remote set-url origin git@github.com:octocat/my-full-stack.git
-```
-
-- Add this repo as another "remote" to allow you to get updates later:
-
-```bash
-git remote add upstream git@github.com:fastapi/full-stack-fastapi-template.git
-```
-
-- Push the code to your new repository:
-
-```bash
-git push -u origin main
-```
-
-### Update From the Original Template
-
-After cloning the repository, and after doing changes, you might want to get the latest changes from this original template.
-
-- Make sure you added the original repository as a remote, you can check it with:
-
-```bash
-git remote -v
-
-origin    git@github.com:octocat/my-full-stack.git (fetch)
-origin    git@github.com:octocat/my-full-stack.git (push)
-upstream    git@github.com:fastapi/full-stack-fastapi-template.git (fetch)
-upstream    git@github.com:fastapi/full-stack-fastapi-template.git (push)
-```
-
-- Pull the latest changes without merging:
-
-```bash
-git pull --no-commit upstream main
-```
-
-This will download the latest changes from this template without committing them, that way you can check everything is right before committing.
-
-- If there are conflicts, solve them in your editor.
-
-- Once you are done, commit the changes:
-
-```bash
-git merge --continue
-```
-
-### Configure
-
-First, copy the environment template file to create your `.env` file:
-
-```bash
+# From repo root
 cp .env.example .env
+# Fill in Neon credentials, a generated SECRET_KEY, FIRST_SUPERUSER creds, etc.
+# Add PGSSLMODE=require (not in the template's .env.example)
+
+docker compose up --build
 ```
 
-You can then update configs in the `.env` file to customize your configurations.
+Then:
 
-Before deploying it, make sure you change at least the values for:
+- Frontend dev server: http://localhost:5173
+- Backend API docs (Swagger): http://localhost:8000/docs
+- Adminer: http://localhost:8080
+- Mailcatcher: http://localhost:1080
 
-- `SECRET_KEY`
-- `FIRST_SUPERUSER_PASSWORD`
-- `POSTGRES_PASSWORD`
-
-You can (and should) pass these as environment variables from secrets.
-
-Read the [deployment.md](./deployment.md) docs for more details.
-
-### Generate Secret Keys
-
-Some environment variables in the `.env.example` file (and your `.env` file after copying it) have a default value of `changethis`.
-
-You have to change them with a secret key, to generate secret keys you can run the following command:
+### Regenerating the frontend API client after backend changes
 
 ```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
+docker compose up -d backend
+cd frontend && npm run generate-client
 ```
 
-Copy the content and use that as password / secret key. And run that again to generate another secure key.
+### Alembic migrations
 
-## How To Use It - Alternative With Copier
-
-This repository also supports generating a new project using [Copier](https://copier.readthedocs.io).
-
-It will copy all the files, ask you configuration questions, and update the `.env` files with your answers.
-
-### Install Copier
-
-You can install Copier with:
+Always run inside the backend container:
 
 ```bash
-pip install copier
+docker compose exec backend alembic revision --autogenerate -m "describe_change"
+docker compose exec backend alembic upgrade head
 ```
 
-Or better, if you have [`pipx`](https://pipx.pypa.io/), you can run it with:
+Migration files live at `backend/app/alembic/versions/` (**not** `backend/alembic/versions/`).
+
+---
+
+## Production deployment
+
+### Backend (Hetzner VPS)
+
+Production compose file: `docker-compose.prod.yml`. Two services only:
+
+- `prestart`: runs `alembic upgrade head` + seeds superuser. Exits 0.
+- `backend`: uvicorn on `127.0.0.1:8000`. Caddy on the host proxies `https://5-78-200-61.nip.io` → `localhost:8000` with auto-TLS via Let's Encrypt.
 
 ```bash
-pipx install copier
+# On VPS
+cd ~/reed-resume-engine
+git pull origin main
+docker compose -f docker-compose.prod.yml up --build -d
 ```
 
-**Note**: If you have `pipx`, installing copier is optional, you could run it directly.
-
-### Generate a Project With Copier
-
-Decide a name for your new project's directory, you will use it below. For example, `my-awesome-project`.
-
-Go to the directory that will be the parent of your project, and run the command with your project's name:
+### Frontend (Vercel)
 
 ```bash
-copier copy https://github.com/fastapi/full-stack-fastapi-template my-awesome-project --trust
+cd frontend
+vercel --prod
 ```
 
-If you have `pipx` and you didn't install `copier`, you can run it directly:
+`VITE_API_URL` is set in Vercel's Production env var (baked into the bundle at build time).
 
-```bash
-pipx run copier copy https://github.com/fastapi/full-stack-fastapi-template my-awesome-project --trust
+### Deployment notes
+
+- `.env` on the VPS is never committed — generate a fresh `SECRET_KEY` in production; reusing the dev key would let dev Fernet tokens decrypt prod API keys.
+- SPA rewrite rule lives in `frontend/vercel.json` — required so deep-link refreshes don't 404.
+- The `application` table's `company` and `role_title` columns are populated by Call B's JD extraction (null if the JD doesn't name them explicitly). Dashboard allows inline-edit as a fallback.
+
+---
+
+## Repository layout
+
+```
+reed-resume-engine/
+├── backend/
+│   ├── app/
+│   │   ├── api/routes/        # one file per route group
+│   │   ├── alembic/versions/  # migrations
+│   │   ├── core/              # config, security, db engine
+│   │   ├── models.py          # all SQLModel tables + schemas
+│   │   └── templates/         # LaTeX Jinja2 template
+│   └── pyproject.toml
+├── frontend/
+│   ├── src/
+│   │   ├── routes/            # TanStack Router file-based routes
+│   │   ├── features/          # feature-scoped components
+│   │   ├── hooks/             # react-query hooks
+│   │   ├── components/        # shared UI
+│   │   └── client/            # auto-generated OpenAPI client — never hand-edit
+│   └── vercel.json
+├── docker-compose.yml         # dev
+├── docker-compose.prod.yml    # prod
+└── .env.example
 ```
 
-**Note** the `--trust` option is necessary to be able to execute a [post-creation script](https://github.com/fastapi/full-stack-fastapi-template/blob/master/.copier/update_dotenv.py) that updates your `.env` files.
+---
 
-### Input Variables
+## Credits
 
-Copier will ask you for some data, you might want to have at hand before generating the project.
-
-But don't worry, you can just update any of that in the `.env` files afterwards.
-
-The input variables, with their default values (some auto generated) are:
-
-- `project_name`: (default: `"FastAPI Project"`) The name of the project, shown to API users (in .env).
-- `stack_name`: (default: `"fastapi-project"`) The name of the stack used for Docker Compose labels and project name (no spaces, no periods) (in .env).
-- `secret_key`: (default: `"changethis"`) The secret key for the project, used for security, stored in .env, you can generate one with the method above.
-- `first_superuser`: (default: `"admin@example.com"`) The email of the first superuser (in .env).
-- `first_superuser_password`: (default: `"changethis"`) The password of the first superuser (in .env).
-- `smtp_host`: (default: "") The SMTP server host to send emails, you can set it later in .env.
-- `smtp_user`: (default: "") The SMTP server user to send emails, you can set it later in .env.
-- `smtp_password`: (default: "") The SMTP server password to send emails, you can set it later in .env.
-- `emails_from_email`: (default: `"info@example.com"`) The email account to send emails from, you can set it later in .env.
-- `postgres_password`: (default: `"changethis"`) The password for the PostgreSQL database, stored in .env, you can generate one with the method above.
-- `sentry_dsn`: (default: "") The DSN for Sentry, if you are using it, you can set it later in .env.
-
-## Backend Development
-
-Backend docs: [backend/README.md](./backend/README.md).
-
-## Frontend Development
-
-Frontend docs: [frontend/README.md](./frontend/README.md).
-
-## Deployment
-
-Deployment docs: [deployment.md](./deployment.md).
-
-## Development
-
-General development docs: [development.md](./development.md).
-
-This includes using Docker Compose, custom local domains, `.env` configurations, etc.
-
-## Release Notes
-
-Check the file [release-notes.md](./release-notes.md).
-
-## License
-
-The Full Stack FastAPI Template is licensed under the terms of the MIT license.
+Built on top of the [full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template) by Sebastián Ramírez, retheming and rebuilding around the resume-engine domain.
