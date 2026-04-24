@@ -49,7 +49,8 @@ def read_applications(
     )
     count = session.exec(count_statement).one()
 
-    # Left-join jobposting to pull company + role_title into the response
+    # Prefer company/role stored on the Application itself; fall back to a
+    # linked JobPosting for older rows created before those columns existed.
     statement = (
         select(Application, JobPosting)
         .join(JobPosting, Application.job_posting_id == JobPosting.id, isouter=True)
@@ -64,8 +65,8 @@ def read_applications(
         ApplicationListItem(
             id=app.id,
             job_posting_id=app.job_posting_id,
-            company=jp.company if jp else None,
-            role_title=jp.role_title if jp else None,
+            company=app.company or (jp.company if jp else None),
+            role_title=app.role_title or (jp.role_title if jp else None),
             match_score=app.match_score,
             status=app.status,
             notes=app.notes,

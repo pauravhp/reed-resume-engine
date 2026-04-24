@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input"
 interface NotesCellProps {
   value: string
   onSave: (value: string) => void
+  placeholder?: string
 }
 
-export function NotesCell({ value, onSave }: NotesCellProps) {
+export function NotesCell({ value, onSave, placeholder = "Click to add notes" }: NotesCellProps) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -40,7 +41,7 @@ export function NotesCell({ value, onSave }: NotesCellProps) {
       className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
       onClick={startEdit}
     >
-      {value || <span className="italic">Click to add notes</span>}
+      {value || <span className="italic">{placeholder}</span>}
     </span>
   )
 }

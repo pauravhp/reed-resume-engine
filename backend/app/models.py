@@ -416,6 +416,8 @@ class Application(SQLModel, table=True):
     notes: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     jd_text: str | None = Field(default=None)
+    company: str | None = Field(default=None)
+    role_title: str | None = Field(default=None)
 
 
 class ApplicationCreate(SQLModel):
@@ -428,6 +430,8 @@ class ApplicationCreate(SQLModel):
 class ApplicationUpdate(SQLModel):
     status: str | None = None
     notes: str | None = None
+    company: str | None = None
+    role_title: str | None = None
 
 
 class ApplicationPublic(SQLModel):

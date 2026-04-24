@@ -53,8 +53,15 @@ async def _call_groq_answer(
 
 Using the candidate's background and the job description below, write a strong, specific answer to the application question.
 
-Rules:
-- Be specific — reference the candidate's actual background
+ABSOLUTE RULE — NO HALLUCINATION:
+- The Candidate Background is the ONLY source of truth about the candidate. Use ONLY facts literally present in it.
+- Do NOT invent, imply, or infer any credentials, degrees, program names, schools, employers, job titles, years of experience, technologies, frameworks, languages, certifications, publications, or achievements that are not explicitly stated in the Candidate Background.
+- If the Candidate Background does not mention a specific tool, framework, or skill that would be useful for this answer, DO NOT claim the candidate has it — just work with what is actually there.
+- If the Candidate Background does not specify degree level (bachelor's / master's / PhD), DO NOT assert one.
+- When in doubt about any fact, omit it. A shorter, truthful answer is strictly better than a longer, fabricated one.
+
+Style rules:
+- Be specific — reference concrete things from the Candidate Background
 - Avoid generic filler phrases like "I am passionate about..." or "I have always been..."
 - Write in first person
 - Keep the answer to 3-5 sentences unless the question clearly warrants more

@@ -321,7 +321,7 @@ Respond with JSON only, exactly this shape: {{"summary": "..."}}"""
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         response_format={"type": "json_object"},
-        temperature=0.3,
+        temperature=0.8,
     )
     return json.loads(response.choices[0].message.content)
 
@@ -386,7 +386,7 @@ async def _call_groq_experiences(
 
     prompt = f"""You are a resume tailoring expert.
 
-Select the most relevant bullet points from each work experience for this job description.
+Select the most relevant bullet points from each work experience for this job description, and extract the posting's company + role title if explicitly present.
 
 Rules:
 - {bullets_guidance}
@@ -395,6 +395,7 @@ Rules:
 - Include coursework ONLY if the JD explicitly requires academic background in that area, OR the candidate has 1 or fewer work experience entries
 - Provide a match_score (0-100) reflecting how well the candidate's background fits this role
 - Provide brief match_reasoning (2-3 sentences) explaining the score
+- For jd_company and jd_role_title: ONLY extract values literally present in the Job Description text. If the JD does not explicitly name the hiring company or the role title, return null for that field. Do NOT guess, infer, or generalize from the JD's content.
 
 Job Description:
 {jd_text}
@@ -411,7 +412,9 @@ Respond with JSON only, exactly this shape:
   "match_score": 75,
   "match_reasoning": "...",
   "include_coursework": false,
-  "coursework_items": []
+  "coursework_items": [],
+  "jd_company": "...",
+  "jd_role_title": "..."
 }}"""
 
     response = await client.chat.completions.create(
@@ -591,6 +594,8 @@ async def generate_resume(
     latex = _assemble_latex(template_str, response_dict, profile, current_user.email, leadership, educations)
 
     # 6. Save Application row
+    jd_company = exp_r.get("jd_company")
+    jd_role_title = exp_r.get("jd_role_title")
     application = Application(
         user_id=current_user.id,
         job_posting_id=job_posting_id,
@@ -598,6 +603,8 @@ async def generate_resume(
         generated_latex=latex,
         match_score=response_dict.get("match_score"),
         jd_text=jd_text,
+        company=jd_company if jd_company else None,
+        role_title=jd_role_title if jd_role_title else None,
     )
     session.add(application)
     session.commit()

@@ -25,8 +25,10 @@ export function ApplicationsTable() {
   })
 
   const patchMutation = useMutation({
-    mutationFn: ({ id, update }: { id: string; update: { status?: string; notes?: string } }) =>
-      apiPatch(`/api/v1/applications/${id}`, update),
+    mutationFn: ({ id, update }: {
+      id: string
+      update: { status?: string; notes?: string; company?: string | null; role_title?: string | null }
+    }) => apiPatch(`/api/v1/applications/${id}`, update),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["applications"] }),
   })
 
@@ -66,8 +68,24 @@ export function ApplicationsTable() {
         <tbody>
           {applications.map((app) => (
             <tr key={app.id} className="border-b last:border-0 hover:bg-muted/20">
-              <td className="px-4 py-3 font-medium">{app.company ?? "—"}</td>
-              <td className="px-4 py-3 text-muted-foreground">{app.role_title ?? "—"}</td>
+              <td className="px-4 py-3 font-medium min-w-[140px]">
+                <NotesCell
+                  value={app.company ?? ""}
+                  onSave={(company) =>
+                    patchMutation.mutate({ id: app.id, update: { company: company || null } })
+                  }
+                  placeholder="Click to add company"
+                />
+              </td>
+              <td className="px-4 py-3 text-muted-foreground min-w-[140px]">
+                <NotesCell
+                  value={app.role_title ?? ""}
+                  onSave={(role_title) =>
+                    patchMutation.mutate({ id: app.id, update: { role_title: role_title || null } })
+                  }
+                  placeholder="Click to add role"
+                />
+              </td>
               <td className="px-4 py-3 tabular-nums">
                 {app.match_score !== null ? `${app.match_score}%` : "—"}
               </td>
