@@ -14,17 +14,21 @@ export function SkillsTab() {
 
   useEffect(() => {
     if (skills) {
-      setLanguages(skills.languages ?? "")
-      setFrameworks(skills.frameworks ?? "")
-      setTools(skills.tools ?? "")
+      setLanguages((skills.languages ?? []).join(", "))
+      setFrameworks((skills.frameworks ?? []).join(", "))
+      setTools((skills.tools ?? []).join(", "))
     }
   }, [skills])
 
   function handleSave() {
-    upsert.mutate({ languages, frameworks, tools }, {
-      onSuccess: () => toast.success("Skills saved"),
-      onError: () => toast.error("Failed to save skills"),
-    })
+    const toList = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean)
+    upsert.mutate(
+      { languages: toList(languages), frameworks: toList(frameworks), tools: toList(tools) },
+      {
+        onSuccess: () => toast.success("Skills saved"),
+        onError: () => toast.error("Failed to save skills"),
+      }
+    )
   }
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>

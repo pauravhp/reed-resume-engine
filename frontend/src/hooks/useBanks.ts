@@ -64,9 +64,9 @@ export interface LeadershipCreate { organization: string; role: string; start_da
 export interface LeadershipUpdate extends LeadershipCreate { id: string }
 
 export interface Skills {
-  languages: string
-  frameworks: string
-  tools: string
+  languages: string[]
+  frameworks: string[]
+  tools: string[]
 }
 
 // ---- Projects ----
