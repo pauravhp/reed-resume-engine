@@ -23,7 +23,7 @@ function LeadershipForm({
   onCancel: () => void
 }) {
   const [org, setOrg] = useState(item?.organization ?? "")
-  const [role, setRole] = useState(item?.role_title ?? "")
+  const [role, setRole] = useState(item?.role ?? "")
   const [startDate, setStartDate] = useState(item?.start_date ?? "")
   const [endDate, setEndDate] = useState(item?.end_date ?? "")
   const [location, setLocation] = useState(item?.location ?? "")
@@ -35,7 +35,7 @@ function LeadershipForm({
 
   function handleSave() {
     const payload = {
-      organization: org, role_title: role,
+      organization: org, role,
       start_date: startDate, end_date: endDate || null,
       location,
       bullets: bullets.split("\n").map((l) => l.trim()).filter(Boolean),
@@ -97,7 +97,7 @@ export function LeadershipTab() {
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>
 
-  const listItems = items.map((l) => ({ ...l, label: l.organization, sublabel: l.role_title }))
+  const listItems = items.map((l) => ({ ...l, label: l.organization, sublabel: l.role }))
 
   return (
     <CRUDList

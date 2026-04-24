@@ -16,13 +16,13 @@ export interface ProjectUpdate extends ProjectCreate { id: string }
 export interface Experience {
   id: string
   company: string
-  role_title: string
+  role: string
   start_date: string
   end_date: string | null
   location: string
   bullets: string[]
 }
-export interface ExperienceCreate { company: string; role_title: string; start_date: string; end_date?: string | null; location: string; bullets: string[] }
+export interface ExperienceCreate { company: string; role: string; start_date: string; end_date?: string | null; location: string; bullets: string[] }
 export interface ExperienceUpdate extends ExperienceCreate { id: string }
 
 export interface EducationItem {
@@ -54,13 +54,13 @@ export interface EducationUpdate extends Partial<EducationCreate> { id: string }
 export interface Leadership {
   id: string
   organization: string
-  role_title: string
+  role: string
   start_date: string
   end_date: string | null
   location: string
   bullets: string[]
 }
-export interface LeadershipCreate { organization: string; role_title: string; start_date: string; end_date?: string | null; location: string; bullets: string[] }
+export interface LeadershipCreate { organization: string; role: string; start_date: string; end_date?: string | null; location: string; bullets: string[] }
 export interface LeadershipUpdate extends LeadershipCreate { id: string }
 
 export interface Skills {

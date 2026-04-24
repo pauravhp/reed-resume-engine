@@ -23,7 +23,7 @@ function ExperienceForm({
   onCancel: () => void
 }) {
   const [company, setCompany] = useState(item?.company ?? "")
-  const [roleTitle, setRoleTitle] = useState(item?.role_title ?? "")
+  const [roleTitle, setRoleTitle] = useState(item?.role ?? "")
   const [startDate, setStartDate] = useState(item?.start_date ?? "")
   const [endDate, setEndDate] = useState(item?.end_date ?? "")
   const [location, setLocation] = useState(item?.location ?? "")
@@ -35,7 +35,7 @@ function ExperienceForm({
 
   function handleSave() {
     const payload = {
-      company, role_title: roleTitle,
+      company, role: roleTitle,
       start_date: startDate, end_date: endDate || null,
       location,
       bullets: bullets.split("\n").map((l) => l.trim()).filter(Boolean),
@@ -100,7 +100,7 @@ export function ExperienceTab() {
   const listItems = experiences.map((e) => ({
     ...e,
     label: e.company,
-    sublabel: e.role_title,
+    sublabel: e.role,
   }))
 
   return (
