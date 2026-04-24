@@ -59,6 +59,7 @@ Job Assistant Agent*
 
 # Extension build artifacts
 extension/.output/
+extension/.output-*/
 extension/.wxt/
 extension/node_modules/
 
