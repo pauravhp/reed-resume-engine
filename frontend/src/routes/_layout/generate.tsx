@@ -28,7 +28,17 @@ export const Route = createFileRoute("/_layout/generate")({
 
 function GeneratePage() {
   const { user } = useAuth()
-  const [jd, setJd] = useState(() => localStorage.getItem("jd_capture") ?? "")
+  const [jd, setJd] = useState(() => {
+    const raw = localStorage.getItem("jd_capture")
+    if (raw) {
+      try {
+        return JSON.parse(raw).jd ?? ""
+      } catch {
+        return raw
+      }
+    }
+    return ""
+  })
   const [output, setOutput] = useState<GenerateOutput | null>(null)
 
   const [summary, setSummary] = useState("")
@@ -40,6 +50,26 @@ function GeneratePage() {
     if (localStorage.getItem("jd_capture")) {
       localStorage.removeItem("jd_capture")
     }
+  }, [])
+
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === "jd_capture") {
+        const raw = localStorage.getItem("jd_capture")
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw)
+            setJd(parsed.jd ?? raw)
+          } catch {
+            setJd(raw)
+          }
+          localStorage.removeItem("jd_capture")
+          toast.success("New job description loaded")
+        }
+      }
+    }
+    window.addEventListener("storage", handler)
+    return () => window.removeEventListener("storage", handler)
   }, [])
 
   const { data: profile } = useQuery<{
